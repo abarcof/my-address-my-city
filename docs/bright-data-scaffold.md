@@ -1,6 +1,6 @@
 # Bright Data Bonus — Official Live Context
 
-**Status:** Implemented. Optional module, disabled by default via feature flag.
+**Status:** Enabled. Zone `serp_api1` created, `BRIGHTDATA_API_KEY` in Vercel, feature flag on.
 
 ---
 
