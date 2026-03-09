@@ -7,4 +7,4 @@
  * Requires BRIGHTDATA_API_KEY (or BRIGHT_DATA_API_KEY) in server env.
  * Disabled by default to protect core app stability.
  */
-export const BRIGHT_DATA_ENABLED = false;
+export const BRIGHT_DATA_ENABLED = true;

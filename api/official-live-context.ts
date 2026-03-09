@@ -58,7 +58,7 @@ async function fetchViaBrightData(query: string): Promise<{ organic?: Array<{ li
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      zone: process.env.BRIGHT_DATA_SERP_ZONE || 'serp_api',
+      zone: process.env.BRIGHT_DATA_SERP_ZONE || 'serp_api1',
       url: searchUrl,
       format: 'json',
     }),
