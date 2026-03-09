@@ -45,7 +45,8 @@ function slug(id: string): string {
   return id.replace(/[^a-z0-9-]/gi, '-').slice(0, 50);
 }
 
-const BRIGHT_DATA_TIMEOUT_MS = 20000;
+// Per-request timeout; Vercel Hobby = 10s total, Pro = 25s+
+const BRIGHT_DATA_TIMEOUT_MS = 6000;
 
 async function fetchViaBrightData(query: string): Promise<{ organic?: Array<{ link?: string; title?: string; description?: string }> } | null> {
   const apiKey = process.env.BRIGHTDATA_API_KEY || process.env.BRIGHT_DATA_API_KEY;
@@ -62,33 +63,33 @@ async function fetchViaBrightData(query: string): Promise<{ organic?: Array<{ li
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        zone: process.env.BRIGHT_DATA_SERP_ZONE || 'serp_api1',
-        url: searchUrl,
-        format: 'json',
-      }),
+    body: JSON.stringify({
+      zone: process.env.BRIGHT_DATA_SERP_ZONE || 'serp_api1',
+      url: searchUrl,
+      format: 'json',
+    }),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
 
     if (!res.ok) return null;
-    const json = (await res.json()) as {
+    const json = (await res.json()) as Record<string, unknown>;
+    const raw = json as {
       organic?: Array<{ link?: string; title?: string; description?: string }>;
+      organic_results?: Array<{ link?: string; url?: string; title?: string; description?: string; snippet?: string }>;
       results?: Array<{ type?: string; url?: string; link?: string; title?: string; description?: string; snippet?: string }>;
     };
-    // Bright Data can return organic[] (link,title,description) or results[] (url,title,snippet)
-    if (json.organic?.length) return json;
-    if (json.results?.length) {
-      const organic = json.results
-        .filter((r) => r.type === 'organic' || !r.type)
-        .map((r) => ({
-          link: r.url || r.link,
-          title: r.title,
-          description: r.description || r.snippet,
-        }));
-      return { organic };
+    const toOrganic = (arr: Array<{ link?: string; url?: string; title?: string; description?: string; snippet?: string }>) =>
+      arr.map((r) => ({ link: r.url || r.link, title: r.title, description: r.description || r.snippet }));
+    if (raw.organic?.length) return raw;
+    if (raw.organic_results?.length) return { organic: toOrganic(raw.organic_results) };
+    if (raw.results?.length) {
+      const organic = toOrganic(
+        raw.results.filter((r: { type?: string }) => r.type === 'organic' || !r.type)
+      );
+      return organic.length ? { organic } : raw;
     }
-    return json;
+    return raw;
   } catch {
     clearTimeout(timeoutId);
     return null;
@@ -124,8 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (neighborhood) baseTerms.push(neighborhood);
   if (label) baseTerms.push(label.split(',')[0]?.trim() || '');
 
-  queries.push(`site:montgomeryal.gov ${baseTerms.join(' ')} public notice`);
-  queries.push(`site:montgomeryal.gov Montgomery permits update`);
+  queries.push(`site:montgomeryal.gov Montgomery Alabama`);
+  queries.push(`site:montgomeryal.gov ${baseTerms.join(' ')}`);
   queries.push(`site:capture.montgomeryal.gov Montgomery`);
 
   const seenUrls = new Set<string>();
