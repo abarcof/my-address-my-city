@@ -31,8 +31,11 @@ npm-debug.log*
 # Vercel
 .vercel/
 
-# Cursor workspace (project-specific rules in .cursor/rules can be committed if desired)
-# .cursor/
+# Cursor workspace (rules, research, internal docs — not for jury/repo)
+.cursor/
+AGENTS.md
+Steps_Hackaton.txt
+docs/
+*Deep research*
+*Magister*
 
-# Unrelated project files
-Magister.pdf
